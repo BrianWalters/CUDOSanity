@@ -1,4 +1,4 @@
-import {defineField, defineType} from 'sanity'
+import {defineArrayMember, defineField, defineType} from 'sanity'
 import {SchemaType} from '../../consts/SchemaType'
 
 export const gameSchema = defineType({
@@ -18,6 +18,13 @@ export const gameSchema = defineType({
       options: {
         columns: 2
       }
+    },
+    {
+      name: 'awards',
+      title: 'Awards',
+      options: {
+        columns: 2
+      }
     }
   ],
   fields: [
@@ -31,30 +38,102 @@ export const gameSchema = defineType({
       title: 'Minimum',
       description: 'Minimum amount of minutes of playtime.',
       type: 'number',
-      validation: rule => rule.required()
+      validation: rule => rule.required(),
+      fieldset: 'time'
     }),
     defineField({
       name: 'timeUpper',
       title: 'Maximum',
       description: 'Maximum amount of minutes of playtime.',
       type: 'number',
-      validation: rule => rule.required()
+      validation: rule => rule.required(),
+      fieldset: 'time'
     }),
     defineField({
       name: 'minimumPlayers',
       title: 'Minimum',
       type: 'number',
-      validation: rule => rule.required()
+      validation: rule => rule.required(),
+      fieldset: 'players'
     }),
     defineField({
       name: 'maximumPlayers',
       title: 'Maximum',
       type: 'number',
-      validation: rule => rule.required()
+      validation: rule => rule.required(),
+      fieldset: 'players'
     }),
     defineField({
       name: 'summary',
       type: 'text'
+    }),
+    defineField({
+      name: 'teamMembers',
+      type: 'array',
+      of: [
+        defineArrayMember({
+          type: 'reference',
+          to: [
+            {
+              type: SchemaType.TeamMember
+            }
+          ]
+        })
+      ],
+      validation: rule => rule.required()
+    }),
+    defineField({
+      name: 'season',
+      type: 'reference',
+      to: [
+        {
+          type: SchemaType.Season
+        }
+      ],
+      validation: rule => rule.required()
+    }),
+    defineField({
+      name: 'awards',
+      type: 'array',
+      title: 'Won',
+      of: [
+        defineArrayMember({
+          type: 'reference',
+          to: [
+            {
+              type: SchemaType.Award
+            }
+          ]
+        })
+      ]
+    }),
+    defineField({
+      name: 'runnerUpAwards',
+      type: 'array',
+      title: 'Runner-up',
+      of: [
+        defineArrayMember({
+          type: 'reference',
+          to: [
+            {
+              type: SchemaType.Award
+            }
+          ]
+        })
+      ]
+    }),
+    defineField({
+      name: 'images',
+      type: 'array',
+      of: [
+        defineArrayMember({
+          type: 'image'
+        })
+      ]
+    }),
+    defineField({
+      name: 'website',
+      type: 'string'
     })
   ]
 })
