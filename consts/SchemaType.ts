@@ -1,3 +1,4 @@
 export enum SchemaType {
-  Game = 'game'
+  Game = 'game',
+  TeamMember = "teamMember",
 }
