@@ -22,10 +22,12 @@
     "styled-components": "^6.1.15"
   },
   "devDependencies": {
+    "@dotenvx/dotenvx": "^1.44.1",
     "@sanity/eslint-config-studio": "^5.0.2",
     "@types/react": "^18.0.25",
     "eslint": "^9.9.0",
     "prettier": "^3.0.2",
+    "tsx": "^4.19.4",
     "typescript": "^5.1.6"
   },
   "prettier": {
