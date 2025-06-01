@@ -73,11 +73,13 @@ async function init() {
 
   for (let i = 0; i < teamMembers.length; i++) {
     const teamMember = teamMembers[i]
+    const name = teamMember.fields.Name
     await client.createIfNotExists({
       _id: teamMember.id,
       _type: SchemaType.TeamMember,
       name: teamMember.fields.Name
     })
+    console.log(`> Created team member ${name}.`)
   }
 
   const response1 = await fetch(tableUrl, fetchOptions)
@@ -104,10 +106,12 @@ async function init() {
     const players = parsePlayers(record.fields.Players)
     const playtime = parseTime(record.fields.Time, players)
 
+    const name = record.fields.ID
+
     await client.createOrReplace({
       _id: record.id,
       _type: SchemaType.Game,
-      name: record.fields.ID,
+      name,
       summary: record.fields.Summary,
       images: imageDocs.map(doc => ({
         _type: 'reference',
@@ -122,6 +126,8 @@ async function init() {
       timeLower: playtime.lower,
       timeUpper: playtime.upper
     })
+
+    console.log(`> Created game ${name}.`)
   }
 }
 
