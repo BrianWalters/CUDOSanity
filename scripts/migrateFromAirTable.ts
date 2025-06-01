@@ -25,7 +25,10 @@ const Record = z.object({
     ).optional(),
     Awards: z.array(
       z.string()
-    ).optional(),
+    ).optional().default([]),
+    'Runner Up': z.array(
+      z.string()
+    ).optional().default([]),
     Website: z.string().optional(),
     Players: z.string().optional().default('0 players')
   })
@@ -33,17 +36,18 @@ const Record = z.object({
 
 const Records = z.array(Record)
 
-const TeamMember = z.object({
+const IdAndName = z.object({
   id: z.string(),
   fields: z.object({
     Name: z.string()
   })
 })
 
-const TeamMembers = z.array(TeamMember)
+const IdAndNames = z.array(IdAndName)
 
 const tableUrl = new URL('https://api.airtable.com/v0/appDXLyohviLJSUNM/tblRKvLTa2304dNKv')
 const teamMembersUrl = new URL('https://api.airtable.com/v0/appDXLyohviLJSUNM/tblzDAhq2Lk48tJaL')
+const awardsUrl = new URL('https://api.airtable.com/v0/appDXLyohviLJSUNM/tbl81y62r3f7poEJ3')
 
 async function init() {
   const client = createClient({
@@ -66,7 +70,7 @@ async function init() {
   const teamMembersResponse2 = await fetch(teamMembersUrl, fetchOptions)
   const teamMembersResponse2Decoded = await teamMembersResponse2.json()
 
-  const teamMembers = TeamMembers.parse([
+  const teamMembers = IdAndNames.parse([
     ...teamMembersResponseDecoded.records,
     ...teamMembersResponse2Decoded.records
   ])
@@ -93,6 +97,14 @@ async function init() {
     ...decodedResponse.records,
     ...decodedResponse2.records
   ])
+
+  const awardResponse = await fetch(awardsUrl, fetchOptions)
+  const decodedAwards = await awardResponse.json()
+  const awardsFromAirTable = IdAndNames.parse(decodedAwards.records)
+
+  const awards = await client.fetch('*[_type == $awardType]{ _id }', {
+    awardType: SchemaType.Award
+  }) ?? []
 
   const seasons = await client.fetch('*[_type == $season]{ _id }', {
     season: SchemaType.Season
@@ -123,6 +135,39 @@ async function init() {
       console.log(`> Created season ${seasonId}.`)
     }
 
+    function resolveAwardReferencesFor(awardIds: string[]) {
+      return Promise.all(
+        awardIds.map(awardId => {
+          if (awards.includes(awardId)) {
+            return {
+              _key: crypto.randomUUID(),
+              _type: 'reference',
+              _ref: awardId
+            }
+          }
+
+          const awardFromAirTable = awardsFromAirTable.find(afat => afat.id === awardId)
+
+          if (!awardFromAirTable) throw new Error(`Award ${awardId} not found.`)
+
+          return client.createIfNotExists({
+            _type: SchemaType.Award,
+            _id: awardFromAirTable.id,
+            name: awardFromAirTable.fields.Name
+          }).then(awardDoc => {
+            return {
+              _key: crypto.randomUUID(),
+              _type: 'reference',
+              _ref: awardDoc._id
+            }
+          })
+        })
+      )
+    }
+
+    const awardReferences = resolveAwardReferencesFor(record.fields.Awards)
+    const runnerUpReferences = resolveAwardReferencesFor(record.fields['Runner Up'])
+
     await client.createOrReplace({
       _id: record.id,
       _type: SchemaType.Game,
@@ -148,7 +193,9 @@ async function init() {
       season: {
         _type: 'reference',
         _ref: seasonId
-      }
+      },
+      awards: awardReferences,
+      runnerUpAwards: runnerUpReferences
     })
 
     console.log(`> Created game ${name}.`)
