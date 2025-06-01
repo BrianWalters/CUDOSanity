@@ -165,8 +165,8 @@ async function init() {
       )
     }
 
-    const awardReferences = resolveAwardReferencesFor(record.fields.Awards)
-    const runnerUpReferences = resolveAwardReferencesFor(record.fields['Runner Up'])
+    const awardReferences = await resolveAwardReferencesFor(record.fields.Awards)
+    const runnerUpReferences = await resolveAwardReferencesFor(record.fields['Runner Up'])
 
     await client.createOrReplace({
       _id: record.id,
