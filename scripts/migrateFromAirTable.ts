@@ -3,6 +3,8 @@ import {config} from '@dotenvx/dotenvx'
 import {z} from 'zod'
 import {SchemaType} from '../consts/SchemaType'
 import {fetchAsBuffer} from '../utils/fetchAsBuffer'
+import {parsePlayers} from '../utils/parsePlayers'
+import {parseTime} from '../utils/parseTime'
 
 config({
   path: ['.env.local']
@@ -24,7 +26,8 @@ const Record = z.object({
     Awards: z.array(
       z.string()
     ).optional(),
-    Website: z.string().optional()
+    Website: z.string().optional(),
+    Players: z.string()
   })
 })
 
@@ -32,7 +35,9 @@ const Records = z.array(Record)
 
 const TeamMember = z.object({
   id: z.string(),
-  name: z.string()
+  fields: z.object({
+    Name: z.string()
+  })
 })
 
 const TeamMembers = z.array(TeamMember)
@@ -71,7 +76,7 @@ async function init() {
     await client.createIfNotExists({
       _id: teamMember.id,
       _type: SchemaType.TeamMember,
-      name: teamMember.name
+      name: teamMember.fields.Name
     })
   }
 
@@ -96,6 +101,9 @@ async function init() {
     })
     const imageDocs = await Promise.all(imagePromises)
 
+    const players = parsePlayers(record.fields.Players)
+    const playtime = parseTime(record.fields.Time, players)
+
     await client.createOrReplace({
       _id: record.id,
       _type: SchemaType.Game,
@@ -108,7 +116,11 @@ async function init() {
       teamMembers: record.fields['Team Members'].map(member => ({
         _type: 'reference',
         _ref: member
-      }))
+      })),
+      minimumPlayers: players.min,
+      maximumPlayers: players.max,
+      timeLower: playtime.lower,
+      timeUpper: playtime.upper
     })
   }
 }

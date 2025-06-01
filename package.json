@@ -9,7 +9,8 @@
     "start": "sanity start",
     "build": "sanity build",
     "deploy": "sanity deploy",
-    "deploy-graphql": "sanity graphql deploy"
+    "deploy-graphql": "sanity graphql deploy",
+    "test": "vitest"
   },
   "keywords": [
     "sanity"
@@ -29,7 +30,8 @@
     "eslint": "^9.9.0",
     "prettier": "^3.0.2",
     "tsx": "^4.19.4",
-    "typescript": "^5.1.6"
+    "typescript": "^5.1.6",
+    "vitest": "^3.1.4"
   },
   "prettier": {
     "semi": false,
