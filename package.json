@@ -19,7 +19,8 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "sanity": "^3.90.0",
-    "styled-components": "^6.1.15"
+    "styled-components": "^6.1.15",
+    "zod": "^3.25.43"
   },
   "devDependencies": {
     "@dotenvx/dotenvx": "^1.44.1",
