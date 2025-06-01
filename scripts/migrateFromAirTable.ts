@@ -2,6 +2,7 @@ import {createClient} from '@sanity/client'
 import {config} from '@dotenvx/dotenvx'
 import {z} from 'zod'
 import {SchemaType} from '../consts/SchemaType'
+import {fetchAsBuffer} from '../utils/fetchAsBuffer'
 
 config({
   path: ['.env.local']
@@ -59,11 +60,22 @@ async function init() {
 
   for (let i = 0; i < records.length; i++) {
     const record = records[i]
+
+    const imagePromises = (record.fields.Images ?? []).map(image => {
+      return fetchAsBuffer(image.url)
+        .then(buffer => client.assets.upload('image', buffer))
+    })
+    const imageDocs = await Promise.all(imagePromises)
+
     await client.createOrReplace({
       _id: record.id,
       _type: SchemaType.Game,
       name: record.fields.ID,
-      summary: record.fields.Summary
+      summary: record.fields.Summary,
+      images: imageDocs.map(doc => ({
+        _type: 'reference',
+        _ref: doc._id
+      }))
     })
   }
 }
