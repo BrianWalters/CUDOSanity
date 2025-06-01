@@ -10,6 +10,10 @@ export const seasonSchema = defineType({
       type: 'string',
       validation: rule => rule.required(),
       description: 'The name of the season. Something simple like \'Season 1\' is fine.'
+    }),
+    defineField({
+      name: 'year',
+      type: 'number'
     })
   ]
 })

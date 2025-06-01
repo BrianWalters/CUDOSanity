@@ -14,9 +14,9 @@ const Record = z.object({
   id: z.string(),
   fields: z.object({
     ID: z.string(),
-    Time: z.string(),
+    Time: z.string().optional().default('0 minutes'),
     Summary: z.string(),
-    'Team Members': z.array(z.string()),
+    'Team Members': z.array(z.string()).optional().default([]),
     Season: z.string(),
     Images: z.array(
       z.object({
@@ -27,7 +27,7 @@ const Record = z.object({
       z.string()
     ).optional(),
     Website: z.string().optional(),
-    Players: z.string()
+    Players: z.string().optional().default('0 players')
   })
 })
 
@@ -94,6 +94,10 @@ async function init() {
     ...decodedResponse2.records
   ])
 
+  const seasons = await client.fetch('*[_type == $season]{ _id }', {
+    season: SchemaType.Season
+  })
+
   for (let i = 0; i < records.length; i++) {
     const record = records[i]
 
@@ -107,6 +111,17 @@ async function init() {
     const playtime = parseTime(record.fields.Time, players)
 
     const name = record.fields.ID
+
+    const seasonId = makeSeasonId(record.fields.Season)
+    const seasonAdded = seasons.findIndex((s: any) => s._id === seasonId) > -1
+    if (!seasonAdded) {
+      await client.createIfNotExists({
+        _id: seasonId,
+        _type: SchemaType.Season,
+        name: record.fields.Season
+      })
+      console.log(`> Created season ${seasonId}.`)
+    }
 
     await client.createOrReplace({
       _id: record.id,
@@ -124,11 +139,19 @@ async function init() {
       minimumPlayers: players.min,
       maximumPlayers: players.max,
       timeLower: playtime.lower,
-      timeUpper: playtime.upper
+      timeUpper: playtime.upper,
+      season: {
+        _type: 'reference',
+        _ref: seasonId
+      }
     })
 
     console.log(`> Created game ${name}.`)
   }
+}
+
+function makeSeasonId(seasonName: string) {
+  return seasonName.toLowerCase().replaceAll(' ', '')
 }
 
 init()
