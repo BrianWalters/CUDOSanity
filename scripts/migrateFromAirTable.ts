@@ -30,7 +30,15 @@ const Record = z.object({
 
 const Records = z.array(Record)
 
+const TeamMember = z.object({
+  id: z.string(),
+  name: z.string()
+})
+
+const TeamMembers = z.array(TeamMember)
+
 const tableUrl = new URL('https://api.airtable.com/v0/appDXLyohviLJSUNM/tblRKvLTa2304dNKv')
+const teamMembersUrl = new URL('https://api.airtable.com/v0/appDXLyohviLJSUNM/tblzDAhq2Lk48tJaL')
 
 async function init() {
   const client = createClient({
@@ -46,6 +54,27 @@ async function init() {
       'Authorization': `Bearer ${process.env.AIRTABLE_API_KEY!}`
     }
   }
+
+  const teamMembersResponse1 = await fetch(teamMembersUrl, fetchOptions)
+  const teamMembersResponseDecoded = await teamMembersResponse1.json()
+  teamMembersUrl.searchParams.set('offset', teamMembersResponseDecoded.offset)
+  const teamMembersResponse2 = await fetch(teamMembersUrl, fetchOptions)
+  const teamMembersResponse2Decoded = await teamMembersResponse2.json()
+
+  const teamMembers = TeamMembers.parse([
+    ...teamMembersResponseDecoded.records,
+    ...teamMembersResponse2Decoded.records
+  ])
+
+  for (let i = 0; i < teamMembers.length; i++) {
+    const teamMember = teamMembers[i]
+    await client.createIfNotExists({
+      _id: teamMember.id,
+      _type: SchemaType.TeamMember,
+      name: teamMember.name
+    })
+  }
+
   const response1 = await fetch(tableUrl, fetchOptions)
 
   const decodedResponse = await response1.json()
@@ -75,6 +104,10 @@ async function init() {
       images: imageDocs.map(doc => ({
         _type: 'reference',
         _ref: doc._id
+      })),
+      teamMembers: record.fields['Team Members'].map(member => ({
+        _type: 'reference',
+        _ref: member
       }))
     })
   }
