@@ -74,7 +74,7 @@ async function init() {
   for (let i = 0; i < teamMembers.length; i++) {
     const teamMember = teamMembers[i]
     const name = teamMember.fields.Name
-    await client.createIfNotExists({
+    await client.createOrReplace({
       _id: teamMember.id,
       _type: SchemaType.TeamMember,
       name: teamMember.fields.Name
@@ -128,11 +128,16 @@ async function init() {
       _type: SchemaType.Game,
       name,
       summary: record.fields.Summary,
-      images: imageDocs.map(doc => ({
-        _type: 'reference',
-        _ref: doc._id
+      images: imageDocs.map(imageAssetDoc => ({
+        _key: crypto.randomUUID(),
+        _type: 'image',
+        asset: {
+          _type: 'reference',
+          _ref: imageAssetDoc._id
+        }
       })),
       teamMembers: record.fields['Team Members'].map(member => ({
+        _key: crypto.randomUUID(),
         _type: 'reference',
         _ref: member
       })),
