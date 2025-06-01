@@ -96,6 +96,7 @@ export const gameSchema = defineType({
       name: 'awards',
       type: 'array',
       title: 'Won',
+      fieldset: 'awards',
       of: [
         defineArrayMember({
           type: 'reference',
@@ -111,6 +112,7 @@ export const gameSchema = defineType({
       name: 'runnerUpAwards',
       type: 'array',
       title: 'Runner-up',
+      fieldset: 'awards',
       of: [
         defineArrayMember({
           type: 'reference',
