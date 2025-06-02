@@ -113,9 +113,16 @@ async function init() {
   for (let i = 0; i < records.length; i++) {
     const record = records[i]
 
-    const imagePromises = (record.fields.Images ?? []).map(image => {
+    const imagePromises = (record.fields.Images ?? []).flatMap(image => {
       return fetchAsBuffer(image.url)
         .then(buffer => client.assets.upload('image', buffer))
+        .then(doc => {
+          return [doc]
+        })
+        .catch(() => {
+          console.log(`>! Error uploading image: ${image.url}.`)
+          return []
+        })
     })
     const imageDocs = await Promise.all(imagePromises)
 
