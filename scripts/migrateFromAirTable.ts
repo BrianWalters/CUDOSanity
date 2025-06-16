@@ -1,4 +1,4 @@
-import {createClient} from '@sanity/client'
+import {createClient, SanityImageAssetDocument} from '@sanity/client'
 import {config} from '@dotenvx/dotenvx'
 import {z} from 'zod'
 import {SchemaType} from '../consts/SchemaType'
@@ -113,18 +113,17 @@ async function init() {
   for (let i = 0; i < records.length; i++) {
     const record = records[i]
 
-    const imagePromises = (record.fields.Images ?? []).flatMap(image => {
-      return fetchAsBuffer(image.url)
-        .then(buffer => client.assets.upload('image', buffer))
-        .then(doc => {
-          return [doc]
-        })
-        .catch(() => {
-          console.log(`>! Error uploading image: ${image.url}.`)
-          return []
-        })
+    const imagePromises: Array<Promise<SanityImageAssetDocument>> = (record.fields.Images ?? []).flatMap(async image => {
+      try {
+        const buffer = await fetchAsBuffer(image.url)
+        const doc = await client.assets.upload('image', buffer)
+        return [doc]
+      } catch {
+        console.log(`>! Error uploading image: ${image.url}.`)
+        return []
+      }
     })
-    const imageDocs = await Promise.all(imagePromises)
+    const imageDocs: SanityImageAssetDocument[] = await Promise.all(imagePromises)
 
     const players = parsePlayers(record.fields.Players)
     const playtime = parseTime(record.fields.Time, players)
