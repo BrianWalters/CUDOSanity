@@ -113,7 +113,7 @@ async function init() {
   for (let i = 0; i < records.length; i++) {
     const record = records[i]
 
-    const imagePromises: Array<Promise<SanityImageAssetDocument>> = (record.fields.Images ?? []).flatMap(async image => {
+    const imagePromises = (record.fields.Images ?? []).map(async image => {
       try {
         const buffer = await fetchAsBuffer(image.url)
         const doc = await client.assets.upload('image', buffer)
@@ -123,7 +123,7 @@ async function init() {
         return []
       }
     })
-    const imageDocs: SanityImageAssetDocument[] = await Promise.all(imagePromises)
+    const imageDocs: SanityImageAssetDocument[] = (await Promise.all(imagePromises)).flat()
 
     const players = parsePlayers(record.fields.Players)
     const playtime = parseTime(record.fields.Time, players)
